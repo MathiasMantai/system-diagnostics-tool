@@ -13,16 +13,14 @@ package main
 
 import (
 	"fmt"
+	"math"
+	"log"
+
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/shirou/gopsutil/v3/cpu"
-	"log"
+	"github.com/shirou/gopsutil/v3/load"
+	"github.com/shirou/gopsutil/v3/disk"
 )
-
-func main() {
-	header()
-	memory_data()
-	cpu_data()
-}
 
 func header() {
 	divider()
@@ -47,9 +45,9 @@ func memory_data() {
 	}
 
 	fmt.Println("MEMORY:")
-	fmt.Printf("Total Memory: %v \n", memory.Total)
-	fmt.Printf("Free Memory: %v \n", memory.Free)
-	fmt.Printf("Usage: %v%% \n", memory.UsedPercent)
+	fmt.Printf("total Memory: %v \n", memory.Total)
+	fmt.Printf("free Memory: %v \n", memory.Free)
+	fmt.Printf("usage in percent: %v%% \n", math.Floor(memory.UsedPercent * 100) / 100)
 	divider()
 }
 
@@ -66,4 +64,52 @@ func cpu_data() {
 		fmt.Printf("%v - %v \n", (i + 1), cpus.ModelName)
 	}
 	divider()
+}
+
+func load_data() {
+	loadData, err := load.Misc()
+
+	if err != nil {
+		log.Fatal("Error while accessing load data")
+	}
+
+	fmt.Println(loadData)
+}
+
+func process_data() {
+
+}
+
+func physical_partitions() {
+	fmt.Println("PHYSICAL PARTITIONS:")
+	partitions, err := disk.Partitions(false)
+
+	if err != nil {
+		log.Fatal("Error getting system partitions")
+	}
+
+	for i, partition := range partitions {
+
+
+		usage, err := disk.Usage(partition.Mountpoint)
+
+		if err != nil {
+			log.Fatalf("Error getting usage stats for partition %v", partition.Device)
+		}
+
+		fmt.Printf("%v - %v \n", i, partition.Device)
+		fmt.Printf("  -mountpoint: %v \n", partition.Mountpoint)
+		fmt.Printf("  -free: %v \n", usage.Free)
+		fmt.Printf("  -used: %v \n", usage.Used)
+		fmt.Printf("  -usage in percent: %v%% \n", math.Floor(usage.UsedPercent * 100) / 100)
+	}
+
+	divider()
+}
+
+func main() {
+	header()
+	cpu_data()
+	physical_partitions()
+	memory_data()
 }
