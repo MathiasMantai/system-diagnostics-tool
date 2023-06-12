@@ -1,4 +1,4 @@
-module github.com/mathiasmantai/go-system-tool
+module github.com/mathiasmantai/system-tool
 
 go 1.20
 
