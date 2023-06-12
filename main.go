@@ -15,11 +15,11 @@ import (
 	"fmt"
 	"math"
 	"log"
-
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/load"
 	"github.com/shirou/gopsutil/v3/disk"
+	"github.com/shirou/gopsutil/v3/net"
 )
 
 func header() {
@@ -60,11 +60,6 @@ func cpu_data() {
 		log.Fatal("Error while accessing cpu diagnostics")
 	}
 
-	//usage data of cpu
-	cpuUsageData, err := cpu.Percent(100, false)
-	if err != nil {
-		log.Fatal("Error while accessing cpu usage")
-	}
 
 	//cpu models
 	fmt.Println("CPU:")
@@ -75,12 +70,27 @@ func cpu_data() {
 		fmt.Printf("  - cacheSize: %v \n", cpus.CacheSize)
 	}
 
+	//display total number of physical and logical cores
 	divider()
-
 	cores_total()
-
 	divider()
 }
+
+func cores_total() {
+	phys, err := cpu.Counts(false)
+	if err != nil {
+		log.Fatal("Error getting physical number of cores")
+	}
+
+	logic, err := cpu.Counts(true)
+	if err != nil {
+		log.Fatal("Error getting logical number of cores")
+	}
+
+	fmt.Printf("physical cores total: %v \n", phys)
+	fmt.Printf("logical cores total: %v \n", logic)
+}
+
 
 func load_data() {
 	loadData, err := load.Misc()
@@ -113,7 +123,7 @@ func physical_partitions() {
 			log.Fatalf("Error getting usage stats for partition %v", partition.Device)
 		}
 
-		fmt.Printf("%v - %v \n", i, partition.Device)
+		fmt.Printf("%v - name: %v \n", i, partition.Device)
 		fmt.Printf("  - mountpoint: %v \n", partition.Mountpoint)
 		fmt.Printf("  - free: %v \n", usage.Free)
 		fmt.Printf("  - used: %v \n", usage.Used)
@@ -123,24 +133,41 @@ func physical_partitions() {
 	divider()
 }
 
-func cores_total() {
-	phys, err := cpu.Counts(false)
+//gives information about network interfaces
+func net_interfaces() {
+	netInterfaces, err := net.Interfaces()
+
 	if err != nil {
-		log.Fatal("Error getting physical number of cores")
+		log.Fatal("Error getting network interface information")
 	}
 
-	logic, err := cpu.Counts(true)
-	if err != nil {
-		log.Fatal("Error getting logical number of cores")
+	fmt.Println("NETWORK INTERFACES")
+
+	for i, netInterface := range netInterfaces {
+		fmt.Printf("%v - name: %v \n", i+1, netInterface.Name)
+
+		//hardware address
+		fmt.Printf("  - hardware address: %v \n", netInterface.HardwareAddr)
+
+		//display addresses (ipv4/ipv6) for each network interface
+		fmt.Println("  Addresses:")
+		for _, address := range netInterface.Addrs {
+			fmt.Printf("    - %v \n", address.Addr)
+		}
+
+		//MTU 
+		fmt.Printf("  - MTU: %v \n", netInterface.MTU)
 	}
 
-	fmt.Printf("physical cores total: %v \n", phys)
-	fmt.Printf("logical cores total: %v \n", logic)
+	divider()
 }
+
+
 
 func main() {
 	header()
 	cpu_data()
 	physical_partitions()
 	virtual_memory()
+	net_interfaces()
 }
