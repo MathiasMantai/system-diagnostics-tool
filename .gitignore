@@ -1,4 +1,5 @@
 ./main.exe
 ./main
-./go-system-tool
-./go-system-tool.exe
+system-tool
+./system-tool
+./system-tool.exe
