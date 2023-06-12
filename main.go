@@ -37,14 +37,14 @@ func divider() {
 	fmt.Print("\n")
 }
 
-func memory_data() {
+func virtual_memory() {
 	memory, err := mem.VirtualMemory()
 
 	if err != nil {
 		log.Fatal("Error while accessing virtual memory diagnostics")
 	}
 
-	fmt.Println("MEMORY:")
+	fmt.Println("VIRTUAL MEMORY:")
 	fmt.Printf("total Memory: %v \n", memory.Total)
 	fmt.Printf("free Memory: %v \n", memory.Free)
 	fmt.Printf("usage in percent: %v%% \n", math.Floor(memory.UsedPercent * 100) / 100)
@@ -52,22 +52,33 @@ func memory_data() {
 }
 
 func cpu_data() {
+
+	//general information about cpu
 	cpuData, err := cpu.Info()
 
 	if err != nil {
 		log.Fatal("Error while accessing cpu diagnostics")
 	}
-	
+
+	//usage data of cpu
+	cpuUsageData, err := cpu.Percent(100, false)
+	if err != nil {
+		log.Fatal("Error while accessing cpu usage")
+	}
+
 	//cpu models
 	fmt.Println("CPU:")
 	for i, cpus := range cpuData {
 		fmt.Printf("%v - %v \n", (i + 1), cpus.ModelName)
+		fmt.Printf("  - cores: %v \n", cpus.Cores)
+		fmt.Printf("  - mhz: %v \n", cpus.Mhz)
+		fmt.Printf("  - cacheSize: %v \n", cpus.CacheSize)
 	}
 
 	divider()
 
-	cores()
-	
+	cores_total()
+
 	divider()
 }
 
@@ -103,16 +114,16 @@ func physical_partitions() {
 		}
 
 		fmt.Printf("%v - %v \n", i, partition.Device)
-		fmt.Printf("  -mountpoint: %v \n", partition.Mountpoint)
-		fmt.Printf("  -free: %v \n", usage.Free)
-		fmt.Printf("  -used: %v \n", usage.Used)
-		fmt.Printf("  -usage in percent: %v%% \n", math.Floor(usage.UsedPercent * 100) / 100)
+		fmt.Printf("  - mountpoint: %v \n", partition.Mountpoint)
+		fmt.Printf("  - free: %v \n", usage.Free)
+		fmt.Printf("  - used: %v \n", usage.Used)
+		fmt.Printf("  - usage in percent: %v%% \n", math.Floor(usage.UsedPercent * 100) / 100)
 	}
 
 	divider()
 }
 
-func cores() {
+func cores_total() {
 	phys, err := cpu.Counts(false)
 	if err != nil {
 		log.Fatal("Error getting physical number of cores")
@@ -123,13 +134,13 @@ func cores() {
 		log.Fatal("Error getting logical number of cores")
 	}
 
-	fmt.Printf("physical cores: %v \n", phys)
-	fmt.Printf("logical cores: %v \n", logic)
+	fmt.Printf("physical cores total: %v \n", phys)
+	fmt.Printf("logical cores total: %v \n", logic)
 }
 
 func main() {
 	header()
 	cpu_data()
 	physical_partitions()
-	memory_data()
+	virtual_memory()
 }
