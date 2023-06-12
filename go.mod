@@ -1,4 +1,4 @@
-module github.com/mathiasmantai/system-tool
+module github.com/mathiasmantai/system-diagnostics-tool
 
 go 1.20
 
