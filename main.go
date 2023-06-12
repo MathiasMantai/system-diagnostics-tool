@@ -63,6 +63,11 @@ func cpu_data() {
 	for i, cpus := range cpuData {
 		fmt.Printf("%v - %v \n", (i + 1), cpus.ModelName)
 	}
+
+	divider()
+
+	cores()
+	
 	divider()
 }
 
@@ -105,6 +110,21 @@ func physical_partitions() {
 	}
 
 	divider()
+}
+
+func cores() {
+	phys, err := cpu.Counts(false)
+	if err != nil {
+		log.Fatal("Error getting physical number of cores")
+	}
+
+	logic, err := cpu.Counts(true)
+	if err != nil {
+		log.Fatal("Error getting logical number of cores")
+	}
+
+	fmt.Printf("physical cores: %v \n", phys)
+	fmt.Printf("logical cores: %v \n", logic)
 }
 
 func main() {
