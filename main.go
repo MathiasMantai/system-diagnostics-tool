@@ -5,6 +5,9 @@
 	shown diagnostics:
 	- virtual memory usage
 	- cpu models
+	- physical partitions
+	- network interfaces
+	- 
 */
 
 
@@ -14,6 +17,8 @@ import (
 	"fmt"
 	"math"
 	"log"
+	"os"
+
 	"github.com/shirou/gopsutil/v3/mem"
 	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/load"
@@ -23,6 +28,8 @@ import (
     "github.com/docker/docker/client"
     "golang.org/x/net/context"
 )
+
+//helper functions
 
 func header() {
 	divider()
@@ -38,6 +45,66 @@ func divider() {
 	}
 	fmt.Print("\n")
 }
+
+//parse command line arguments
+func parse_args(functions map[string]func()) {
+	args := get_param()
+
+	//if args are empty just display everything
+	if len(args) == 0 {
+		display_all(functions)
+		return
+	}
+
+	//check if help or all argument was put in
+	if check_utility_param(args, functions) {
+		return 
+	}
+
+	//display specific information
+	header()
+	for _, arg := range args {
+		_, exists := functions[arg]
+		if exists {
+			functions[arg]()
+		}
+	}
+}
+
+func check_utility_param(args []string, functions map[string]func()) bool {
+	for _, arg := range args {
+		if arg == "-h" || arg == "-help" {
+			help_menu()
+			return true
+		} else if arg == "-a" || arg == "-all" {
+			display_all(functions)
+			return true
+		}
+	}
+
+	return false
+
+}
+
+func get_param() []string{
+	return os.Args[1:]
+}
+
+//display help menu with all arguments
+func help_menu() {
+	help := "-h/-help  - open this help window  \n-a        - display all information (omitting arguments will also display everything) \n-cp       - cpu information \n-vm       - virtual memory \n-ni       - display information about network interfaces \n-c        - display information for docker container \n"
+	fmt.Print(help)
+}
+
+func display_all(functions map[string]func()) {
+	header()
+	for _, function := range functions {
+		function()
+	}
+}
+
+
+// System Diagnostics
 
 func virtual_memory() {
 	memory, err := mem.VirtualMemory()
@@ -66,9 +133,9 @@ func cpu_data() {
 	fmt.Println("CPU:")
 	for i, cpus := range cpuData {
 		fmt.Printf("%v - %v \n", (i + 1), cpus.ModelName)
-		fmt.Printf("  - cores: %v \n", cpus.Cores)
-		fmt.Printf("  - mhz: %v \n", cpus.Mhz)
-		fmt.Printf("  - cacheSize: %v \n", cpus.CacheSize)
+		fmt.Printf("   - cores: %v \n", cpus.Cores)
+		fmt.Printf("   - mhz: %v \n", cpus.Mhz)
+		fmt.Printf("   - cacheSize: %v \n", cpus.CacheSize)
 	}
 
 	//display total number of physical and logical cores
@@ -124,10 +191,10 @@ func physical_partitions() {
 		}
 
 		fmt.Printf("%v - name: %v \n", i, partition.Device)
-		fmt.Printf("  - mountpoint: %v \n", partition.Mountpoint)
-		fmt.Printf("  - free: %v \n", usage.Free)
-		fmt.Printf("  - used: %v \n", usage.Used)
-		fmt.Printf("  - usage in percent: %v%% \n", math.Floor(usage.UsedPercent * 100) / 100)
+		fmt.Printf("   - mountpoint: %v \n", partition.Mountpoint)
+		fmt.Printf("   - free: %v \n", usage.Free)
+		fmt.Printf("   - used: %v \n", usage.Used)
+		fmt.Printf("   - usage in percent: %v%% \n", math.Floor(usage.UsedPercent * 100) / 100)
 	}
 
 	divider()
@@ -199,11 +266,27 @@ func container_data() {
 	divider()
 }
 
+
+
 func main() {
-	header()
-	cpu_data()
-	physical_partitions()
-	virtual_memory()
-	net_interfaces()
-	container_data()
+
+	//put all functions inside a map
+	functions := map[string]func(){
+		"-cp": cpu_data,
+		"-pp": physical_partitions,
+		"-vm": virtual_memory,
+		"-ni": net_interfaces,
+		"-c" : container_data,
+	}
+
+	//first parse all cli argument entered
+	parse_args(functions)
+
+
+	// header()
+	// cpu_data()
+	// physical_partitions()
+	// virtual_memory()
+	// net_interfaces()
+	// container_data()
 }
