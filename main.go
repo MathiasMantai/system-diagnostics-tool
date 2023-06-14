@@ -5,7 +5,6 @@
 	shown diagnostics:
 	- virtual memory usage
 	- cpu models
-
 */
 
 
@@ -20,6 +19,9 @@ import (
 	"github.com/shirou/gopsutil/v3/load"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/net"
+	"github.com/docker/docker/api/types"
+    "github.com/docker/docker/client"
+    "golang.org/x/net/context"
 )
 
 func header() {
@@ -30,7 +32,7 @@ func header() {
 
 func divider() {
 	i := 0
-	for i < 30 {
+	for i < 40 {
 		fmt.Print("=")
 		i++
 	}
@@ -59,7 +61,6 @@ func cpu_data() {
 	if err != nil {
 		log.Fatal("Error while accessing cpu diagnostics")
 	}
-
 
 	//cpu models
 	fmt.Println("CPU:")
@@ -116,7 +117,6 @@ func physical_partitions() {
 
 	for i, partition := range partitions {
 
-
 		usage, err := disk.Usage(partition.Mountpoint)
 
 		if err != nil {
@@ -162,7 +162,42 @@ func net_interfaces() {
 	divider()
 }
 
+/*
+	get docker container data
+*/
+func container_data() {
+	cli, err := client.NewClientWithOpts(client.FromEnv)
 
+	if err != nil {
+		log.Fatal(err)
+	}
+    options := types.ContainerListOptions{
+        All: true, // Include stopped containers as well
+    }
+
+	containers, err := cli.ContainerList(context.Background(), options)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("DOCKER CONTAINER")
+	for i, container := range containers {
+		fmt.Printf("%v - container id: %v \n", i, container.ID)
+		fmt.Printf("   - image: %v \n", container.Image)
+		fmt.Printf("   - state: %v \n", container.State)
+		fmt.Printf("   - status: %v \n", container.Status)
+
+		if len(container.Ports) > 0 {
+			fmt.Println("   - Ports")
+			for _, port := range container.Ports {
+				fmt.Printf("      - %v (%v) \n", port.PublicPort, port.Type)
+			}
+		}
+	}
+
+	divider()
+}
 
 func main() {
 	header()
@@ -170,4 +205,5 @@ func main() {
 	physical_partitions()
 	virtual_memory()
 	net_interfaces()
+	container_data()
 }
