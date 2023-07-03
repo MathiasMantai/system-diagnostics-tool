@@ -86,6 +86,8 @@ func check_utility_param(args []string, functions map[string]func()) bool {
 
 }
 
+
+
 func get_param() []string{
 	return os.Args[1:]
 }
@@ -171,7 +173,7 @@ func load_data() {
 }
 
 func process_data() {
-
+	process := g
 }
 
 func physical_partitions() {
@@ -267,7 +269,6 @@ func container_data() {
 }
 
 
-
 func main() {
 
 	//put all functions inside a map
@@ -281,12 +282,4 @@ func main() {
 
 	//first parse all cli argument entered
 	parse_args(functions)
-
-
-	// header()
-	// cpu_data()
-	// physical_partitions()
-	// virtual_memory()
-	// net_interfaces()
-	// container_data()
 }
